@@ -8,17 +8,15 @@
 
 
 static std::vector<std::vector<int>>* init_random_vectors(size_t vectors_count, size_t vector_size) {
-    auto vectors = new std::vector<std::vector<int>>[vectors_count];
-    auto start_nested = omp_get_nested();
+    auto vectors = new std::vector<std::vector<int>>(vectors_count);
     omp_set_nested(true);
-#pragma omp parallel for shared(vectors) default(none)
-    for (auto &&vector: *vectors) {
-#pragma omp parallel for shared(vector) private(vector_size) default(none)
-        for (int i = 0; i < vector_size; ++i) {
-            vector[i] = rand();
+    for (int i = 0; i < vectors_count; ++i) {
+        auto vector = std::vector<int>();
+        for (int j = 0; j < vector_size; ++j) {
+            vector.push_back(rand());
         }
+        vectors->push_back(vector);
     }
-    omp_set_nested(start_nested);
     return vectors;
 }
 
@@ -27,7 +25,7 @@ static std::vector<std::vector<int>>* init_random_vectors(size_t vectors_count, 
 int main(int argc, char** argv) {
     srand(time(nullptr));
     int vectors_count = 1000;
-    int vector_size = 20000;
+    int vector_size = 200000;
     auto vectors = std::unique_ptr<std::vector<std::vector<int>>>(init_random_vectors(vectors_count, vector_size));
 
     auto start = omp_get_wtime();
