@@ -4,76 +4,47 @@
 #include <unistd.h>
 #include <memory>
 #include <vector>
-#include <algorithm>
+#include "vectors_summarizing.h"
 
-#define BUFFER_SIZE 1000
-#define VECTORS_COUNT 2
 
-std::vector<int>* init_random_vectors(size_t vector_size, size_t vector_count = 2) {
-    auto vectors = new std::vector<int>[vector_count];
-    for (int i = 0; i < vector_count; ++i) {
-        vectors[i] = std::vector<int>(vector_size);
+static std::vector<std::vector<int>>* init_random_vectors(size_t vectors_count, size_t vector_size) {
+    auto vectors = new std::vector<std::vector<int>>[vectors_count];
+    auto start_nested = omp_get_nested();
+    omp_set_nested(true);
+#pragma omp parallel for shared(vectors) default(none)
+    for (auto &&vector: *vectors) {
+#pragma omp parallel for shared(vector) private(vector_size) default(none)
+        for (int i = 0; i < vector_size; ++i) {
+            vector[i] = rand();
+        }
     }
-
+    omp_set_nested(start_nested);
     return vectors;
 }
 
-long sum_vectors_single(size_t vector_size, size_t vectors_count = VECTORS_COUNT) {
-    auto vectors = init_random_vectors(vector_size, vectors_count);
-    long total_sum = 0;
-
-    omp_set_nested(true);
-    for (int i = 0; i < vectors_count; ++i) {
-        auto vector = vectors[i];
-        int n;
-        for (int j : vector) {
-            n = j;
-        }
-
-        total_sum = n;
-    }
-
-    delete[] vectors;
-    return total_sum;
-}
-
-long sum_vectors_parallel(size_t vector_size, size_t vectors_count = VECTORS_COUNT) {
-    auto vectors = init_random_vectors(vector_size, vectors_count);
-    long total_sum = 0;
-
-    omp_set_nested(true);
-#pragma omp parallel for shared(vectors_count, vectors) reduction(+:total_sum) default(none)
-    for (int i = 0; i < vectors_count; ++i) {
-        auto vector = vectors[i];
-        int n;
-#pragma omp parallel for reduction(+:n) private(vector) default(none)
-        for (int j : vector) {
-            n = j;
-        }
-
-        total_sum = n;
-    }
-
-    delete[] vectors;
-    return total_sum;
-}
 
 
 int main(int argc, char** argv) {
+    srand(time(nullptr));
+    int vectors_count = 1000;
+    int vector_size = 20000;
+    auto vectors = std::unique_ptr<std::vector<std::vector<int>>>(init_random_vectors(vectors_count, vector_size));
+
     auto start = omp_get_wtime();
-    int vectors_count = 100;
-    int vector_size = 100000;
-    auto result = sum_vectors_parallel(vector_size, vectors_count);
+    sum_vectors_parallel(*vectors);
     auto end = omp_get_wtime();
     std::cout << "Execution time for parallel: " << (end - start) << std::endl;
     
     start = omp_get_wtime();
-    result = sum_vectors_single( vector_size, vectors_count);
+    sum_vectors_single(*vectors);
     end = omp_get_wtime();
     std::cout << "Execution time for single: " << end - start << std::endl;
+
 }
 
+
 void rewritten_main(int argc, char** argv) {
+#define BUFFER_SIZE 10000
     std::cout << "Processors count: " << omp_get_num_procs() << "\n";
     int a[BUFFER_SIZE],
             b[BUFFER_SIZE],
