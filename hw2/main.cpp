@@ -5,7 +5,11 @@
 #include <memory>
 #include <vector>
 #include "vectors_summarizing.h"
+#include "matrix.h"
 
+void vectorsMultiplyTimeCheck(size_t vectorsCount, size_t vectorSize);
+
+void matrixMultiplyTimeCheck(size_t matrixSize);
 
 static std::vector<std::vector<int>>* init_random_vectors(size_t vectors_count, size_t vector_size) {
     auto vectors = new std::vector<std::vector<int>>(vectors_count);
@@ -23,24 +27,88 @@ static std::vector<std::vector<int>>* init_random_vectors(size_t vectors_count, 
 
 
 int main(int argc, char** argv) {
+    std::string runMode;
+
+    // [0] is name of program
+    if (argc > 1) {
+        runMode = argv[1];
+    } else {
+        std::cout << "Enter run mode: 'matrix' or 'vectors'\n";
+        std::cin >> runMode;
+    }
+    try {
+        if (runMode == "matrix") {
+            size_t matrixSize = 0;
+            if (argc == 2) {
+                matrixSize = std::stoll(argv[2]);
+            } else {
+                std::cout << "Enter matrix size: ";
+                std::cin >> matrixSize;
+            }
+            matrixMultiplyTimeCheck(matrixSize);
+        } else if (runMode == "vectors") {
+            size_t vectorsCount = 0,
+                    vectorSize = 0;
+            if (argc == 4) {
+                vectorsCount = std::stoll(argv[2]);
+                vectorSize = std::stoll(argv[3]);
+            } else {
+                std::cout << "Enter vectors count: ";
+                std::cin >> vectorsCount;
+                std::cout << "Enter vector size: ";
+                std::cin >> vectorSize;
+            }
+            vectorsMultiplyTimeCheck(vectorsCount, vectorSize);
+        } else {
+            std::cout << "Invalid input run mode\n";
+            exit(1);
+        }
+    } catch (const std::exception& e) {
+        std::cout << e.what();
+        exit(1);
+    }
+}
+
+void matrixMultiplyTimeCheck(size_t matrixSize) {
+    if (matrixSize < 1) {
+        throw std::runtime_error("Matrix size must be positive. Given: " + std::to_string(matrixSize));
+    }
+    auto left = std::unique_ptr<Matrix>(Matrix::createRandomMatrix(matrixSize));
+    auto right = std::unique_ptr<Matrix>(Matrix::createRandomMatrix(matrixSize));
+
+    auto start = omp_get_wtime();
+    left->multiplyParallel(*right);
+    auto end = omp_get_wtime();
+    std::cout << "Execution time for parallel: " << end - start << std::endl;
+
+    start = omp_get_wtime();
+    left->multiplySingle(*right);
+    end = omp_get_wtime();
+    std::cout << "Execution time for single: " << end - start << std::endl;
+}
+
+void vectorsMultiplyTimeCheck(size_t vectorsCount, size_t vectorSize) {
     srand(time(nullptr));
-    int vectors_count = 1000;
-    int vector_size = 200000;
-    auto vectors = std::unique_ptr<std::vector<std::vector<int>>>(init_random_vectors(vectors_count, vector_size));
+    if (vectorsCount < 1) {
+        throw std::runtime_error("Vectors count must be positive. Given: " + std::to_string(vectorsCount));
+    }
+    if (vectorSize < 1) {
+        throw std::runtime_error("Vector size must be positive. Given: " + std::to_string(vectorsCount));
+    }
+    auto vectors = std::unique_ptr<std::vector<std::vector<int>>>(init_random_vectors(vectorsCount, vectorSize));
 
     auto start = omp_get_wtime();
     sum_vectors_parallel(*vectors);
     auto end = omp_get_wtime();
     std::cout << "Execution time for parallel: " << (end - start) << std::endl;
-    
+
     start = omp_get_wtime();
     sum_vectors_single(*vectors);
     end = omp_get_wtime();
     std::cout << "Execution time for single: " << end - start << std::endl;
-
 }
 
-
+#pragma region DEPRECATED
 void rewritten_main(int argc, char** argv) {
 #define BUFFER_SIZE 10000
     std::cout << "Processors count: " << omp_get_num_procs() << "\n";
@@ -66,3 +134,4 @@ void rewritten_main(int argc, char** argv) {
 
     std::cout << "a[" << BUFFER_SIZE / 2 << "] = " << a[BUFFER_SIZE / 2] << std::endl;
 }
+#pragma endregion
