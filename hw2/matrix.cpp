@@ -6,6 +6,9 @@
 #include <stdexcept>
 #include <functional>
 #include <random>
+#include <omp.h>
+#include <iostream>
+#include "sstream"
 
 static int** createMatrixData(size_t size, const std::function<int()>& getValueFunc) {
     auto data = new int*[size];
@@ -66,14 +69,19 @@ Matrix Matrix::multiplyParallel(const Matrix &matrix) const {
     size_t size = left.size();
     auto data = createEmptyMatrix(size);
 
-#pragma omp parallel for shared(data, left, right, size) default(none)
-    for (int i = 0; i < size; ++i) {
+#pragma omp parallel for collapse(2) shared(data, left, right, size) default(none)
+    for (int i = 0; i < size; ++i)
         for (int j = 0; j < size; ++j) {
+            int result = 0;
+
+            // With reduction execution time increases dramatically
+
+//            #pragma omp parallel for reduction(+:result) shared(left, right, size, i, j) default(none)
             for (int k = 0; k < size; ++k) {
-                data[i][j] += left[i][k] * right[k][j];
+                result += left[i][k] * right[k][j];
             }
+            data[i][j] = result;
         }
-    }
     return {data, size};
 }
 
@@ -85,9 +93,9 @@ Matrix Matrix::multiplySingle(const Matrix &matrix) const {
     checkMatricesLength(left, right);
 
     int **data = createEmptyMatrix(size);
-    for (int k = 0; k < size; ++k) {
-        for (int i = 0; i < size; ++i) {
-            for (int j = 0; j < size; ++j) {
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            for (int k = 0; k < size; ++k) {
                 data[i][j] += left[i][k] * right[k][j];
             }
         }

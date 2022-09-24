@@ -11,6 +11,8 @@ void vectorsMultiplyTimeCheck(size_t vectorsCount, size_t vectorSize);
 
 void matrixMultiplyTimeCheck(size_t matrixSize);
 
+void runInteractiveTest(int argc, char *const *argv);
+
 static std::vector<std::vector<int>>* init_random_vectors(size_t vectors_count, size_t vector_size) {
     auto vectors = new std::vector<std::vector<int>>(vectors_count);
     omp_set_nested(true);
@@ -24,9 +26,25 @@ static std::vector<std::vector<int>>* init_random_vectors(size_t vectors_count, 
     return vectors;
 }
 
-
+void printMatrix(const Matrix& matrix);
 
 int main(int argc, char** argv) {
+    omp_set_dynamic(true);
+    omp_set_nested(true);
+    runInteractiveTest(argc, argv);
+}
+
+void printMatrix(const Matrix& matrix) {
+    for (int i = 0; i < matrix.size(); ++i) {
+        for (int j = 0; j < matrix.size(); ++j) {
+            std::cout << matrix[i][j] << ' ';
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+void runInteractiveTest(int argc, char *const *argv) {
     std::string runMode;
 
     // [0] is name of program
@@ -70,6 +88,28 @@ int main(int argc, char** argv) {
 }
 
 void matrixMultiplyTimeCheck(size_t matrixSize) {
+//    auto first = Matrix::createRandomMatrix(matrixSize);
+//    auto second = Matrix::createRandomMatrix(matrixSize);
+//
+//    auto firstData = first->getData();
+//    auto secondData = second->getData();
+//    auto temp = Matrix(matrixSize);
+//    auto temp2 = Matrix(matrixSize);
+//
+//#pragma omp parallel for collapse(2)
+//    for (int i = 0; i < matrixSize; ++i) {
+//        for (int j = 0; j < matrixSize; ++j) {
+//            int result;
+//#pragma omp parallel for reduction()
+//            for (int k = 0; k < matrixSize; ++k) {
+//
+//            }
+//        }
+//    }
+//
+//    delete second;
+//    delete first;
+
     if (matrixSize < 1) {
         throw std::runtime_error("Matrix size must be positive. Given: " + std::to_string(matrixSize));
     }
@@ -85,6 +125,7 @@ void matrixMultiplyTimeCheck(size_t matrixSize) {
     left->multiplySingle(*right);
     end = omp_get_wtime();
     std::cout << "Execution time for single: " << end - start << std::endl;
+
 }
 
 void vectorsMultiplyTimeCheck(size_t vectorsCount, size_t vectorSize) {

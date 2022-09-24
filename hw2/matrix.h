@@ -43,7 +43,6 @@ public:
     Matrix multiplySingle(const Matrix& matrix) const;
 
     static Matrix* createRandomMatrix(size_t size);
-
 private:
     int** _data;
     size_t _size;
