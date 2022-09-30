@@ -2,6 +2,7 @@
 // Created by ashblade on 07.09.22.
 //
 
+#include "memory"
 #include "matrix.h"
 #include <stdexcept>
 #include <functional>
@@ -81,6 +82,23 @@ Matrix Matrix::multiplyParallel(const Matrix &matrix) const {
                 result += left[i][k] * right[k][j];
             }
             data[i][j] = result;
+
+
+// Not fast
+//            {
+//                int *buffer = new int[size];
+//#pragma omp parallel for shared(buffer, left, right) firstprivate(size, i, j) default(none)
+//                for (int k = 0; k < size; ++k) {
+//                    buffer[k] = left[i][k] * right[k][j];
+//                }
+//
+//                int sum = 0;
+//                for (int k = 0; k < size; ++k) {
+//                    sum += buffer[k];
+//                }
+//                data[i][j] = sum;
+//                delete[] buffer;
+//            }
         }
     return {data, size};
 }
