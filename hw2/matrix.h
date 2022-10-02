@@ -39,16 +39,18 @@ public:
     size_t size() const;
     MatrixColumn operator[](int row) const;
 
-    Matrix multiplyParallel(const Matrix& matrix) const;
-    Matrix multiplySingle(const Matrix& matrix) const;
+    double multiplySequential(const Matrix& matrix) const;
+    double multiplyStandard(const Matrix& matrix, int threadsCount) const;
+    double multiplyBand(const Matrix& matrix, int threadsCount) const;
+    double multiplyBlock(const Matrix &matrix, int threadsCount) const;
 
     static Matrix* createRandomMatrix(size_t size);
+
 private:
     int** _data;
     size_t _size;
 
     Matrix(int** data, size_t size);
 };
-
 
 #endif //C_MATRIX_H

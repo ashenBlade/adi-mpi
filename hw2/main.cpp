@@ -34,145 +34,101 @@ int main(int argc, char** argv) {
     runInteractiveTest(argc, argv);
 }
 
-void printMatrix(const Matrix& matrix) {
-    for (int i = 0; i < matrix.size(); ++i) {
-        for (int j = 0; j < matrix.size(); ++j) {
-            std::cout << matrix[i][j] << ' ';
-        }
-        std::cout << std::endl;
-    }
-    std::cout << std::endl;
-}
 
-void runInteractiveTest(int argc, char *const *argv) {
-    std::string runMode;
-
-    // [0] is name of program
-    if (argc > 1) {
-        runMode = argv[1];
-    } else {
-        std::cout << "Enter run mode: 'matrix' or 'vectors'\n";
-        std::cin >> runMode;
-    }
-    try {
-        if (runMode == "matrix") {
-            size_t matrixSize = 0;
-            if (argc == 2) {
-                matrixSize = std::stoll(argv[2]);
-            } else {
-                std::cout << "Enter matrix size: ";
-                std::cin >> matrixSize;
-            }
-            matrixMultiplyTimeCheck(matrixSize);
-        } else if (runMode == "vectors") {
-            size_t vectorsCount = 0,
-                    vectorSize = 0;
-            if (argc == 4) {
-                vectorsCount = std::stoll(argv[2]);
-                vectorSize = std::stoll(argv[3]);
-            } else {
-                std::cout << "Enter vectors count: ";
-                std::cin >> vectorsCount;
-                std::cout << "Enter vector size: ";
-                std::cin >> vectorSize;
-            }
-            vectorsMultiplyTimeCheck(vectorsCount, vectorSize);
-        } else {
-            std::cout << "Invalid input run mode\n";
-            exit(1);
-        }
-    } catch (const std::exception& e) {
-        std::cout << e.what();
-        exit(1);
-    }
-}
-
-void matrixMultiplyTimeCheck(size_t matrixSize) {
-//    auto first = Matrix::createRandomMatrix(matrixSize);
-//    auto second = Matrix::createRandomMatrix(matrixSize);
-//
-//    auto firstData = first->getData();
-//    auto secondData = second->getData();
-//    auto temp = Matrix(matrixSize);
-//    auto temp2 = Matrix(matrixSize);
-//
-//#pragma omp parallel for collapse(2)
-//    for (int i = 0; i < matrixSize; ++i) {
-//        for (int j = 0; j < matrixSize; ++j) {
-//            int result;
-//#pragma omp parallel for reduction()
-//            for (int k = 0; k < matrixSize; ++k) {
-//
-//            }
-//        }
-//    }
-//
-//    delete second;
-//    delete first;
-
-    if (matrixSize < 1) {
-        throw std::runtime_error("Matrix size must be positive. Given: " + std::to_string(matrixSize));
-    }
-    auto left = std::unique_ptr<Matrix>(Matrix::createRandomMatrix(matrixSize));
-    auto right = std::unique_ptr<Matrix>(Matrix::createRandomMatrix(matrixSize));
-
+double multiplyStandard(int threads, int size) {
+    auto x = Matrix::createRandomMatrix(size);
+    auto y = Matrix::createRandomMatrix(size);
+    auto& left = *x;
+    auto& right = *y;
+    auto result = Matrix(size);
     auto start = omp_get_wtime();
-    left->multiplyParallel(*right);
-    auto end = omp_get_wtime();
-    std::cout << "Execution time for parallel: " << end - start << std::endl;
-
-    start = omp_get_wtime();
-    left->multiplySingle(*right);
-    end = omp_get_wtime();
-    std::cout << "Execution time for single: " << end - start << std::endl;
-
+#pragma omp parallel for shared(size, left, right, result) default(none) num_threads(threads)
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            for (int k = 0; k < size; ++k) {
+                result[i][j] += left[i][k] * right[k][j];
+            }
+        }
+    }
+    auto elapsed = omp_get_wtime() - start;
+    delete x;
+    delete y;
 }
 
-void vectorsMultiplyTimeCheck(size_t vectorsCount, size_t vectorSize) {
-    srand(time(nullptr));
-    if (vectorsCount < 1) {
-        throw std::runtime_error("Vectors count must be positive. Given: " + std::to_string(vectorsCount));
-    }
-    if (vectorSize < 1) {
-        throw std::runtime_error("Vector size must be positive. Given: " + std::to_string(vectorsCount));
-    }
-    auto vectors = std::unique_ptr<std::vector<std::vector<int>>>(init_random_vectors(vectorsCount, vectorSize));
 
+double multiplyPipe(int threads, int size) {
+    auto x = Matrix::createRandomMatrix(size);
+    auto y = Matrix::createRandomMatrix(size);
+    auto& left = *x;
+    auto& right = *y;
+    auto result = Matrix(size);
     auto start = omp_get_wtime();
-    sum_vectors_parallel(*vectors);
-    auto end = omp_get_wtime();
-    std::cout << "Execution time for parallel: " << (end - start) << std::endl;
-
-    start = omp_get_wtime();
-    sum_vectors_single(*vectors);
-    end = omp_get_wtime();
-    std::cout << "Execution time for single: " << end - start << std::endl;
+#pragma omp parallel for collapse(2) shared(size, left, right, result) default(none) num_threads(threads)
+    for (int i = 0; i < size; ++i)
+        for (int j = 0; j < size; ++j) {
+            int sum = 0;
+            for (int k = 0; k < size; ++k) {
+                sum += left[i][k] * right[k][j];
+            }
+            result[i][j] = sum;
+    }
+    auto elapsed = omp_get_wtime() - start;
+    delete x;
+    delete y;
 }
 
-#pragma region DEPRECATED
-void rewritten_main(int argc, char** argv) {
-#define BUFFER_SIZE 10000
-    std::cout << "Processors count: " << omp_get_num_procs() << "\n";
-    int a[BUFFER_SIZE],
-            b[BUFFER_SIZE],
-            c[BUFFER_SIZE],
-            d[BUFFER_SIZE];
-#pragma omp parallel for shared(a, b, c, d, std::cout) default(none)
-    for (int i = 0; i < BUFFER_SIZE; ++i) {
-        a[i] = i;
-        b[i] = i;
-        d[i] = 2 * i;
-        std::stringstream ss;
-        ss << "Current thread number:\t" << omp_get_thread_num() << "\n";
-        ss << "Total threads number:\t" << omp_get_num_threads() << "\n";
-        ss << "-----------------------------\n";
-        std::cout << ss.str();
+void multiplyBlockInner(int** left, int** right, int** result, int k, int i, int j, int size, int blockSize) {
+    int start = blockSize * k;
+    int end = std::min(start + blockSize, size);
+    for (int ii = start; ii < end; ++ii) {
+        for (int jj = start; jj < end; ++jj) {
+            for (int kk = 0; kk < blockSize; ++kk) {
+                result[i][j] += left[i][k] * right[k][j];
+            }
+        }
     }
-#pragma omp parallel for shared(a, b, c, d) default(none)
-    for (int i = 0; i < BUFFER_SIZE; ++i) {
-        c[i] = a[i] + b[i] + d[i];
+}
+
+double multiplyBlock(int threads, int size, int blockSize) {
+    auto left = createRandomMatrixInner(size);
+    auto right = createRandomMatrixInner(size);
+    auto result = createEmptyMatrix(size);
+    int blocksCount = size / blockSize;
+    auto start = omp_get_wtime();
+
+    for (int i = 0; i < blocksCount; ++i) {
+        for (int j = 0; j < blocksCount; ++j) {
+            for (int k = 0; k < blocksCount; ++k) {
+                
+            }
+        }
     }
 
-    std::cout << "a[" << BUFFER_SIZE / 2 << "] = " << a[BUFFER_SIZE / 2] << std::endl;
+    auto elapsed = omp_get_wtime() - start;
+    for (int i = 0; i < size; ++i) {
+        delete[] left[i];
+        delete[] right[i];
+        delete[] result[i];
+    }
+    delete[] left;
+    delete[] right;
+    delete[] result;
+    throw std::exception();
 }
-#pragma endregion
+
+
+void measure11() {
+    auto sizes = {1000, 1500, 2000, 2500, 3000};
+    auto threadsCount = {2, 4, 8};
+    std::vector<std::vector<Measurement>> measurements;
+    for (const auto &size: sizes) {
+        std::vector<Measurement> m;
+        m.push_back(multiplySequential(size));
+        for (const auto &threads: threadsCount) {
+            m.push_back(multiplyStandard(threads, size));
+            m.push_back(multiplyPipe(threads, size));
+            m.push_back(multiplyBlock(threads, size));
+        }
+    }
+}
+
