@@ -7,128 +7,71 @@
 #include "vectors_summarizing.h"
 #include "matrix.h"
 
-void vectorsMultiplyTimeCheck(size_t vectorsCount, size_t vectorSize);
+using exec_time = double;
 
-void matrixMultiplyTimeCheck(size_t matrixSize);
+struct ThreadTestResult {
+    int threadsCount;
+    exec_time standard;
+    exec_time band;
+    exec_time block;
+};
 
-void runInteractiveTest(int argc, char *const *argv);
+struct TestResult {
+    int size;
+    double sequential;
+    std::vector<ThreadTestResult> parallelResults;
+};
 
-static std::vector<std::vector<int>>* init_random_vectors(size_t vectors_count, size_t vector_size) {
-    auto vectors = new std::vector<std::vector<int>>(vectors_count);
-    omp_set_nested(true);
-    for (int i = 0; i < vectors_count; ++i) {
-        auto vector = std::vector<int>();
-        for (int j = 0; j < vector_size; ++j) {
-            vector.push_back(rand());
+std::vector<TestResult>* makeTests();
+
+std::vector<TestResult> *makeTests() {
+    auto vector = new std::vector<TestResult>();
+    auto matrixSizes = {500, 1000, 1500, 2000, 2500, 3000};
+    auto threadsCounts = {2, 4, 6, 8};
+    for (const auto &size: matrixSizes) {
+        auto result = TestResult();
+        result.size = size;
+        auto left = std::unique_ptr<Matrix>(Matrix::createRandomMatrix(size));
+        auto right = std::unique_ptr<Matrix>(Matrix::createRandomMatrix(size));
+        result.sequential = left->multiplySequential(*right);
+        for (const auto &threads: threadsCounts) {
+            auto threadResult = ThreadTestResult();
+            threadResult.threadsCount = threads;
+            threadResult.standard = left->multiplyStandard(*right, threads);
+            threadResult.band = left->multiplyBand(*right, threads);
+            threadResult.block = left->multiplyBlock(*right, threads);
+            result.parallelResults.push_back(threadResult);
+            std::cerr << "Done: " << size << " size, " << threads << " threads\n";
         }
-        vectors->push_back(vector);
+        vector->push_back(result);
     }
-    return vectors;
+    return vector;
 }
 
-void printMatrix(const Matrix& matrix);
+void showResults(const std::vector<TestResult>& results) {
+    for (const auto &result: results) {
+        std::cout << "---------------------------------------------\n";
+        std::cout << "Size: " << result.size << "\n\n";
+        std::cout << "Sequential: " << result.sequential << "\n\n";
+        for (const auto &parallelResult: result.parallelResults) {
+            std::cout << "Threads: " << parallelResult.threadsCount << "\n";
+            std::cout << "\tStandard:\n\t\tTime: " << parallelResult.standard << "\n\t\t" << "Acceleration: " <<  result.sequential / parallelResult.standard << "\n";
+            std::cout << "\tBand:\n\t\tTime: " << parallelResult.band << "\n\t\t" << "Acceleration: " <<  result.sequential / parallelResult.band << "\n";
+            std::cout << "\tBlock:\n\t\tTime: " << parallelResult.block << "\n\t\t" << "Acceleration: " <<  result.sequential / parallelResult.block << "\n\n";
+        }
+    }
+}
 
 int main(int argc, char** argv) {
-    omp_set_dynamic(true);
     omp_set_nested(true);
-    runInteractiveTest(argc, argv);
+    auto results = makeTests();
+    showResults(*results);
+    delete results;
 }
 
 
-double multiplyStandard(int threads, int size) {
-    auto x = Matrix::createRandomMatrix(size);
-    auto y = Matrix::createRandomMatrix(size);
-    auto& left = *x;
-    auto& right = *y;
-    auto result = Matrix(size);
-    auto start = omp_get_wtime();
-#pragma omp parallel for shared(size, left, right, result) default(none) num_threads(threads)
-    for (int i = 0; i < size; ++i) {
-        for (int j = 0; j < size; ++j) {
-            for (int k = 0; k < size; ++k) {
-                result[i][j] += left[i][k] * right[k][j];
-            }
-        }
-    }
-    auto elapsed = omp_get_wtime() - start;
-    delete x;
-    delete y;
-}
 
 
-double multiplyPipe(int threads, int size) {
-    auto x = Matrix::createRandomMatrix(size);
-    auto y = Matrix::createRandomMatrix(size);
-    auto& left = *x;
-    auto& right = *y;
-    auto result = Matrix(size);
-    auto start = omp_get_wtime();
-#pragma omp parallel for collapse(2) shared(size, left, right, result) default(none) num_threads(threads)
-    for (int i = 0; i < size; ++i)
-        for (int j = 0; j < size; ++j) {
-            int sum = 0;
-            for (int k = 0; k < size; ++k) {
-                sum += left[i][k] * right[k][j];
-            }
-            result[i][j] = sum;
-    }
-    auto elapsed = omp_get_wtime() - start;
-    delete x;
-    delete y;
-}
-
-void multiplyBlockInner(int** left, int** right, int** result, int k, int i, int j, int size, int blockSize) {
-    int start = blockSize * k;
-    int end = std::min(start + blockSize, size);
-    for (int ii = start; ii < end; ++ii) {
-        for (int jj = start; jj < end; ++jj) {
-            for (int kk = 0; kk < blockSize; ++kk) {
-                result[i][j] += left[i][k] * right[k][j];
-            }
-        }
-    }
-}
-
-double multiplyBlock(int threads, int size, int blockSize) {
-    auto left = createRandomMatrixInner(size);
-    auto right = createRandomMatrixInner(size);
-    auto result = createEmptyMatrix(size);
-    int blocksCount = size / blockSize;
-    auto start = omp_get_wtime();
-
-    for (int i = 0; i < blocksCount; ++i) {
-        for (int j = 0; j < blocksCount; ++j) {
-            for (int k = 0; k < blocksCount; ++k) {
-                
-            }
-        }
-    }
-
-    auto elapsed = omp_get_wtime() - start;
-    for (int i = 0; i < size; ++i) {
-        delete[] left[i];
-        delete[] right[i];
-        delete[] result[i];
-    }
-    delete[] left;
-    delete[] right;
-    delete[] result;
-    throw std::exception();
-}
 
 
-void measure11() {
-    auto sizes = {1000, 1500, 2000, 2500, 3000};
-    auto threadsCount = {2, 4, 8};
-    std::vector<std::vector<Measurement>> measurements;
-    for (const auto &size: sizes) {
-        std::vector<Measurement> m;
-        m.push_back(multiplySequential(size));
-        for (const auto &threads: threadsCount) {
-            m.push_back(multiplyStandard(threads, size));
-            m.push_back(multiplyPipe(threads, size));
-            m.push_back(multiplyBlock(threads, size));
-        }
-    }
-}
 

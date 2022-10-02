@@ -1,0 +1,292 @@
+Size: 500
+
+Sequential: 0.366792
+
+Threads: 2
+	Standard:
+		Time: 0.242824
+		Acceleration: 1.51052
+	Band:
+		Time: 0.246606
+		Acceleration: 1.48736
+	Block:
+		Time: 0.224048
+		Acceleration: 1.63711
+
+Threads: 4
+	Standard:
+		Time: 0.141756
+		Acceleration: 2.58749
+	Band:
+		Time: 0.119544
+		Acceleration: 3.06825
+	Block:
+		Time: 0.119604
+		Acceleration: 3.06672
+
+Threads: 6
+	Standard:
+		Time: 0.143307
+		Acceleration: 2.55948
+	Band:
+		Time: 0.140663
+		Acceleration: 2.60759
+	Block:
+		Time: 0.133083
+		Acceleration: 2.75611
+
+Threads: 8
+	Standard:
+		Time: 0.127359
+		Acceleration: 2.87998
+	Band:
+		Time: 0.115083
+		Acceleration: 3.18719
+	Block:
+		Time: 0.109013
+		Acceleration: 3.36467
+
+---------------------------------------------
+Size: 1000
+
+Sequential: 3.71051
+
+Threads: 2
+	Standard:
+		Time: 2.41066
+		Acceleration: 1.53921
+	Band:
+		Time: 2.38193
+		Acceleration: 1.55777
+	Block:
+		Time: 1.8597
+		Acceleration: 1.99522
+
+Threads: 4
+	Standard:
+		Time: 1.09254
+		Acceleration: 3.39621
+	Band:
+		Time: 1.13578
+		Acceleration: 3.26691
+	Block:
+		Time: 0.939121
+		Acceleration: 3.95104
+
+Threads: 6
+	Standard:
+		Time: 1.36662
+		Acceleration: 2.71509
+	Band:
+		Time: 1.45585
+		Acceleration: 2.5487
+	Block:
+		Time: 0.962737
+		Acceleration: 3.85412
+
+Threads: 8
+	Standard:
+		Time: 1.29343
+		Acceleration: 2.86874
+	Band:
+		Time: 1.30625
+		Acceleration: 2.84058
+	Block:
+		Time: 1.08027
+		Acceleration: 3.43479
+
+---------------------------------------------
+Size: 1500
+
+Sequential: 15.0297
+
+Threads: 2
+	Standard:
+		Time: 10.0407
+		Acceleration: 1.49687
+	Band:
+		Time: 10.2147
+		Acceleration: 1.47138
+	Block:
+		Time: 6.89796
+		Acceleration: 2.17886
+
+Threads: 4
+	Standard:
+		Time: 4.88298
+		Acceleration: 3.07798
+	Band:
+		Time: 5.45711
+		Acceleration: 2.75415
+	Block:
+		Time: 3.75408
+		Acceleration: 4.00357
+
+Threads: 6
+	Standard:
+		Time: 4.49938
+		Acceleration: 3.3404
+	Band:
+		Time: 4.62541
+		Acceleration: 3.24938
+	Block:
+		Time: 3.25068
+		Acceleration: 4.62356
+
+Threads: 8
+	Standard:
+		Time: 4.74169
+		Acceleration: 3.16969
+	Band:
+		Time: 4.77609
+		Acceleration: 3.14686
+	Block:
+		Time: 3.07873
+		Acceleration: 4.88179
+
+---------------------------------------------
+Size: 2000
+
+Sequential: 44.0714
+
+Threads: 2
+	Standard:
+		Time: 28.1347
+		Acceleration: 1.56644
+	Band:
+		Time: 28.3746
+		Acceleration: 1.5532
+	Block:
+		Time: 15.089
+		Acceleration: 2.92077
+
+Threads: 4
+	Standard:
+		Time: 12.0693
+		Acceleration: 3.65152
+	Band:
+		Time: 12.6581
+		Acceleration: 3.48168
+	Block:
+		Time: 8.12542
+		Acceleration: 5.42389
+
+Threads: 6
+	Standard:
+		Time: 12.4945
+		Acceleration: 3.52727
+	Band:
+		Time: 13.0433
+		Acceleration: 3.37885
+	Block:
+		Time: 7.9824
+		Acceleration: 5.52107
+
+Threads: 8
+	Standard:
+		Time: 12.7023
+		Acceleration: 3.46957
+	Band:
+		Time: 13.3863
+		Acceleration: 3.29228
+	Block:
+		Time: 7.57274
+		Acceleration: 5.81974
+
+---------------------------------------------
+Size: 2500
+
+Sequential: 91.4701
+
+Threads: 2
+	Standard:
+		Time: 51.553
+		Acceleration: 1.7743
+	Band:
+		Time: 49.8099
+		Acceleration: 1.83638
+	Block:
+		Time: 26.2489
+		Acceleration: 3.48472
+
+Threads: 4
+	Standard:
+		Time: 33.076
+		Acceleration: 2.76546
+	Band:
+		Time: 36.6031
+		Acceleration: 2.49897
+	Block:
+		Time: 21.0971
+		Acceleration: 4.33567
+
+Threads: 6
+	Standard:
+		Time: 52.0761
+		Acceleration: 1.75647
+	Band:
+		Time: 52.0537
+		Acceleration: 1.75723
+	Block:
+		Time: 20.6248
+		Acceleration: 4.43495
+
+Threads: 8
+	Standard:
+		Time: 46.8112
+		Acceleration: 1.95402
+	Band:
+		Time: 46.6537
+		Acceleration: 1.96062
+	Block:
+		Time: 19.8715
+		Acceleration: 4.60308
+
+---------------------------------------------
+Size: 3000
+
+Sequential: 197.723
+
+Threads: 2
+	Standard:
+		Time: 121.915
+		Acceleration: 1.62182
+	Band:
+		Time: 113.117
+		Acceleration: 1.74795
+	Block:
+		Time: 52.2255
+		Acceleration: 3.78595
+
+Threads: 4
+	Standard:
+		Time: 80.2809
+		Acceleration: 2.46289
+	Band:
+		Time: 69.2087
+		Acceleration: 2.85691
+	Block:
+		Time: 41.4121
+		Acceleration: 4.77452
+
+Threads: 6
+	Standard:
+		Time: 78.6956
+		Acceleration: 2.51251
+	Band:
+		Time: 78.6146
+		Acceleration: 2.51509
+	Block:
+		Time: 31.1847
+		Acceleration: 6.3404
+
+Threads: 8
+	Standard:
+		Time: 72.5505
+		Acceleration: 2.72532
+	Band:
+		Time: 59.9469
+		Acceleration: 3.2983
+	Block:
+		Time: 27.0372
+		Acceleration: 7.31301

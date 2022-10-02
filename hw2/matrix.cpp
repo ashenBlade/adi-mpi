@@ -69,28 +69,6 @@ MatrixColumn Matrix::operator[](int row) const {
 }
 
 
-double Matrix::multiplyParallel(const Matrix &matrix) const {
-    auto& left = *this;
-    auto& right = matrix;
-    checkMatricesLength(left, right);
-
-    size_t size = left.size();
-    auto data = createEmptyMatrix(size);
-
-#pragma omp parallel for shared(data, left, right, size) default(none)
-    for (int i = 0; i < size; ++i)
-        for (int j = 0; j < size; ++j) {
-            int result = 0;
-
-            for (int k = 0; k < size; ++k) {
-                result += left[i][k] * right[k][j];
-            }
-            data[i][j] = result;
-        }
-    return 0;
-}
-
-
 double Matrix::multiplySequential(const Matrix &matrix) const {
     auto& left = this->_data;
     auto& right = matrix._data;
