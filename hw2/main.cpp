@@ -6,6 +6,7 @@
 #include <vector>
 #include "vectors_summarizing.h"
 #include "matrix.h"
+#include <string>
 
 using exec_time = double;
 
@@ -23,6 +24,8 @@ struct TestResult {
 };
 
 std::vector<TestResult>* makeTests();
+
+void test_parallel_mode();
 
 std::vector<TestResult> *makeTests() {
     auto vector = new std::vector<TestResult>();
@@ -62,11 +65,45 @@ void showResults(const std::vector<TestResult>& results) {
     }
 }
 
+
+
 int main(int argc, char** argv) {
-    omp_set_nested(true);
-    auto results = makeTests();
-    showResults(*results);
-    delete results;
+    int n;
+#pragma omp parallel private(n)
+    {
+        n = 1;
+#pragma omp master
+        {
+            n = 2;
+        };
+        std::cout << "First n: " + std::to_string(n) + '\n';
+#pragma omp barrier
+#pragma omp master
+        {
+            n = 3;
+        };
+        std::cout << "Second n: " + std::to_string(n) + '\n';
+    }
+}
+
+void test_parallel_mode() {
+    if (omp_in_parallel()) {
+        std::cout << "Parallel\n";
+    } else {
+        std::cout << "Sequential\n";
+    }
+#pragma omp parallel
+    {
+#pragma omp master
+        {
+            if (omp_in_parallel()) {
+                std::cout << "Parallel\n";
+            } else {
+                std::cout << "Sequential\n";
+            }
+        }
+    };
+
 }
 
 
