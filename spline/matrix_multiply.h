@@ -7,12 +7,12 @@
 
 #include "matrix.h"
 
-typedef struct multiply_result {
+typedef struct solve_result {
     float* x;
     int length;
-} multiply_result_t;
+} solve_result_t;
 
-multiply_result_t* solve_sequential(matrix_t* matrix);
-multiply_result_t* solve_parallel(matrix_t* matrix);
+solve_result_t* solveSequential(matrix_t* matrix);
+solve_result_t* solveParallel(matrix_t* matrix);
 
 #endif //SPLINE_MATRIX_MULTIPLY_H
