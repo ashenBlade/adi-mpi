@@ -9,7 +9,7 @@
 
 typedef struct solve_result {
     float* x;
-    int length;
+    int size;
 } solve_result_t;
 
 solve_result_t* solveSequential(matrix_t* matrix);
