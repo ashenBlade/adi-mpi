@@ -19,21 +19,25 @@ solve_result_t *solveSequential(matrix_t *matrix) {
     float *b = copy->b;
     float *c = copy->c;
     float *f = copy->f;
-    for (int i = 1; i < size; ++i) {
-        const float coefficient = a[i] / b[i - 1];
-        b[i] = b[i] - coefficient * c[i - 1];
-        f[i] = f[i] - coefficient * f[i - 1];
+
+    // Direct
+    float* alpha = malloc(sizeof(float) * size);
+    float* beta = malloc(sizeof(float) * size);
+    alpha[1] = -b[0] / c[0];
+    beta[1] = f[0] / c[0];
+
+    for (int i = 1; i < size - 1; ++i) {
+        alpha[i + 1] = -b[i] / (a[i] * alpha[i] + c[i]);
+        beta[i + 1] = (f[i] - a[i] * beta[i]) / (a[i] * alpha[i] + c[i]);
     }
 
-    for (int i = size - 2; i > -1; i--) {
-        const float coefficient = c[i] / b[i + 1];
-        f[i] = f[i] - coefficient * f[i + 1];
-    }
+    // Reverse
+    float *x = malloc(sizeof(float) * size);
+    int n = size - 1;
+    x[n] = (f[n] - a[n] * beta[n]) / (a[n] * alpha[n] + c[n]);
 
-    float* x = malloc(sizeof(int) * size);
-
-    for (int i = 0; i < size; ++i) {
-        x[i] = f[i] / b[i];
+    for (int i = n - 1; i > -1; i--) {
+        x[i] = (alpha[i + 1] * x[i + 1] + beta[i + 1]);
     }
 
     return createSolveResult(size, x);
