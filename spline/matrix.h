@@ -5,12 +5,16 @@
 #ifndef SPLINE_MATRIX_H
 #define SPLINE_MATRIX_H
 
-struct matrix {
-    int* a;
-    int* b;
-    int* c;
-    int* f;
-    int length;
-} matrix_t, matrix_part_t;
+typedef struct matrix {
+    float* a;
+    float* b;
+    float* c;
+    float* f;
+    int size;
+} matrix_t;
+
+matrix_t createRandom(int size);
+matrix_t copy(matrix_t* matrix);
+void destruct(matrix_t* matrix);
 
 #endif //SPLINE_MATRIX_H
