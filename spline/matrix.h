@@ -13,8 +13,10 @@ typedef struct matrix {
     int size;
 } matrix_t;
 
-matrix_t createRandom(int size);
-matrix_t copy(matrix_t* matrix);
+matrix_t* createRandom(int size);
+matrix_t* createEmpty(int size);
+void copy(matrix_t* from, matrix_t* to);
+matrix_t* copy_new(matrix_t* from);
 void destruct(matrix_t* matrix);
 
 #endif //SPLINE_MATRIX_H
