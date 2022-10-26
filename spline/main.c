@@ -1,11 +1,14 @@
 #include "stdio.h"
-#include "matrix_multiply.h"
+#include "mpi.h"
 
-int main() {
-    matrix_t* matrix = createRandom(10);
-    solve_result_t* result = solveSequential(matrix);
-    for (int i = 0; i < result->size; ++i) {
-        printf("%f ", result->x[i]);
-    }
+int main(int argc, char** argv) {
+    int rank, size;
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    printf("%i %i\n", rank, size);
+
+    MPI_Finalize();
     return 0;
 }
