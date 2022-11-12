@@ -1,44 +1,46 @@
-#include <cstdio>
 #include <iostream>
-#include "mpi.h"
 #include <algorithm>
+#include <vector>
 #include "cmath"
 
-int main(int argc, char** argv) {
-    const int n = 10;
-    const int N = n + 1;
-    const double xMin = 0,
-                xMax = 3.1415 / 2;
-    const double xStep = (xMax - xMin) / n;
+#define PARTITIONS_COUNT (10)
+#define X_MIN (0)
+#define X_MAX (3.1415 / 2)
+#define X_STEP ((X_MAX - X_MIN) / PARTITIONS_COUNT)
+
+std::vector<double>* solveThomas() {
+    const int N = PARTITIONS_COUNT;
+    const double xStep = X_STEP;
 
     double A[N],
             B[N],
             C[N],
             f[N],
-            F[N],
-            y[N];
+            F[N];
 
-    double x[N], d[N];
+    auto Y = new std::vector<double>(N);
+    auto& y = *Y;
+
+    double x[N],
+            D[N]; // В будущем будет значениями лямбда в точке (x, y)
+
     for (int i = 0; i < N; ++i) {
         x[i] = i * xStep;
-        d[i] = 1;
+        D[i] = 1;
         F[i] = -std::sin(x[i]);
         f[i] = -F[i] * xStep * xStep;
     }
 
     for (int i = 0; i < N; ++i) {
-        A[i] = d[i];
-        B[i] = d[i + 1];
-        C[i] = d[i] + d[i + 1];
+        A[i] = D[i];
+        B[i] = D[i + 1];
+        C[i] = D[i] + D[i + 1];
     }
 
     A[0] = B[N - 1] = 0;
 
     double alpha[N],
             beta[N];
-
-//    alpha[0] = -B[0] / C[0];
-//    beta[0] = F[0] / C[0];
     alpha[0] = 0;
     for (int i = 0; i < N - 1; ++i) {
         alpha[i + 1] =
@@ -58,8 +60,16 @@ int main(int argc, char** argv) {
         y[i] = alpha[i + 1] * y[i + 1] + beta[i + 1];
     }
 
-    for (int i = 0; i < N; ++i) {
-        std::cout << "y[" << i << "] = " << y[i] << '\n';
+    return Y;
+}
+
+int main(int argc, char** argv) {
+    auto y = solveThomas();
+
+    for (int i = 0; i < y->size(); ++i) {
+        std::cout << "y[" << i << "] = " << y->operator[](i) << std::endl;
     }
+
+    delete y;
     return 0;
 }
