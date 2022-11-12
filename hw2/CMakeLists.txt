@@ -7,9 +7,7 @@ set(CMAKE_CXX_COMPILER "/usr/bin/mpic++")
 
 
 add_executable(parallel_programming
-        main.cpp
-        vectors_summarizing.cpp
-        matrix.cpp)
+        main.cpp)
 
 target_include_directories(parallel_programming
         PUBLIC /usr/include/mpi)
