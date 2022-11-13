@@ -3,14 +3,22 @@
 #include <vector>
 #include "cmath"
 
-#define PARTITIONS_COUNT (10)
+#define X_PARTITIONS_COUNT (10)
 #define X_MIN (0)
-#define X_MAX (3.1415 / 2)
-#define X_STEP ((X_MAX - X_MIN) / PARTITIONS_COUNT)
+#define X_MAX (1)
 
-std::vector<double>* solveThomas() {
-    const int N = PARTITIONS_COUNT;
-    const double xStep = X_STEP;
+#define Y_PARTITIONS_COUNT (10)
+#define Y_MIN (0)
+#define Y_MAX (0.5)
+
+double getLambda(double x, double y) {
+    return 0.25 <= x && x <= 0.65 &&
+    0.1 <= y && y <= 0.25 ? 0.01 : 0.0001;
+}
+
+std::vector<double>* solveThomas(int partitionsCount, double yMin, double yMax) {
+    const int N = partitionsCount;
+    const double step = (yMax - yMin) / partitionsCount;
 
     double A[N],
             B[N],
@@ -25,10 +33,10 @@ std::vector<double>* solveThomas() {
             D[N]; // В будущем будет значениями лямбда в точке (x, y)
 
     for (int i = 0; i < N; ++i) {
-        x[i] = i * xStep;
+        x[i] = i * step;
         D[i] = 1;
         F[i] = -std::sin(x[i]);
-        f[i] = -F[i] * xStep * xStep;
+        f[i] = -F[i] * step * step;
     }
 
     for (int i = 0; i < N; ++i) {
@@ -53,8 +61,9 @@ std::vector<double>* solveThomas() {
                 (C[i] - A[i] * alpha[i]);
     }
 
-    y[0] = 0;
-    y[N - 1] = 1;
+    // Граничные условия
+    y[0] = yMin;
+    y[N - 1] = yMax;
 
     for (int i = N - 2; i >= 0; --i) {
         y[i] = alpha[i + 1] * y[i + 1] + beta[i + 1];
@@ -63,8 +72,10 @@ std::vector<double>* solveThomas() {
     return Y;
 }
 
+
+
 int main(int argc, char** argv) {
-    auto y = solveThomas();
+    auto y = solveThomas(X_PARTITIONS_COUNT, X_MIN, X_MAX);
 
     for (int i = 0; i < y->size(); ++i) {
         std::cout << "y[" << i << "] = " << y->operator[](i) << std::endl;
