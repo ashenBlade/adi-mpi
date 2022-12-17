@@ -1,39 +1,10 @@
 #include <iostream>
 #include <algorithm>
-#include <vector>
 
 
 double getLambda(double x, double y) {
     return 0.25 <= x && x <= 0.65 &&
     0.1 <= y && y <= 0.25 ? 0.01 : 0.0001;
-}
-
-std::vector<double>* restoreT(const std::vector<double>& T,
-                              const std::vector<double>& lambda,
-                              const double step,
-                              const double timeStep) {
-    if (lambda.size() != T.size()) {
-        throw std::runtime_error("Размеры lambda и T не равны в restoreT");
-    }
-
-    auto& result = *new std::vector<double>();
-    
-    // крайние варианты
-
-    double firstTemperature = T[0] / timeStep + (((lambda[0] + lambda[1]) / 2) * (T[1] - T[0])) / (2 * step * step);
-    result.push_back(firstTemperature);
-    for (int i = 1; i < T.size() - 1; ++i) {
-        double currentTemperature = T[i] / timeStep + (((lambda[i] + lambda[i + 1]) / 2) * (T[i + 1] - T[i]) -
-                           ((lambda[i] + lambda[i - 1]) / 2) * (T[i] - T[i - 1])) / (2 * step * step);
-        result.push_back(currentTemperature);
-    }
-    auto last = T.size() - 1;
-
-    double lastTemperature = T[last] / timeStep +
-                             (((lambda[last] - lambda[last - 1]) / 2) * (T[last] - T[last - 1])) / (2 * step * step);
-    result.push_back(lastTemperature);
-    
-    return &result;
 }
 
 double avg(double left, double right) {
@@ -72,17 +43,11 @@ void solveThomas(const double* F,
     }
 
     y[length - 1] = max;
-//    y[0] = min;
     for (int i = length - 2; i >= 0; i--) {
         y[i] = alpha[i] * y[i + 1] + beta[i];
     }
 }
 
-
-/// Восстановить значения по найденным Y
-/// len(y) = size
-/// len(lambda) = size + 2 (для промежуточных значений)
-/// len(T) = size
 void restoreValues(const double* y,
                    const double* lambda,
                    const int size,
@@ -99,7 +64,7 @@ void restoreValues(const double* y,
 
 int main(int argc, char** argv) {
     const int size = 10;
-    const double timeStep = 0.01;
+    const double timeStep = 0.1;
     const double tLeft = 600;
     const double tRight = 1200;
     const double xMin = 0;
@@ -142,7 +107,7 @@ int main(int argc, char** argv) {
     }
 
 
-    const int iterations = 10;
+    const int iterations = 100;
     for (int t = 0; t < iterations; ++t) {
         // Вычисляю yn+1/2
         for (int x = 0; x < size; ++x) {
@@ -179,14 +144,15 @@ int main(int argc, char** argv) {
 //                lambdaByX[x][y] = lambdaByY[y][x];
             }
         }
-
-        for (int i = 1; i < size - 1; ++i) {
-            for (int j = 1; j < size - 1; ++j) {
-                std::cout << temperatureByX[i][j] << " ";
+        if (t % 20 == 0) {
+            for (int i = 1; i < size - 1; ++i) {
+                for (int j = 1; j < size - 1; ++j) {
+                    std::cout << temperatureByX[i][j] << " ";
+                }
+                std::cout << "\n";
             }
-            std::cout << "\n";
+            std::cout << "\n\n";
         }
-        std::cout << "\n\n";
     }
 
 }
