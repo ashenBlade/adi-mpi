@@ -111,11 +111,14 @@ int main(int argc, char** argv) {
         return 0;
     }
 
+    /// Создаем свой тип данных для передачи по столбцам
     MPI_Datatype matrixColumnsType, columnType;
 
+    // Передача по столбцам
     MPI_Type_vector(size, 1, size, MPI_DOUBLE, &matrixColumnsType);
     MPI_Type_commit(&matrixColumnsType);
 
+    // Перемещение по массиву делаем через каждые sizeof(double) байтов, т.е. смещение в 1 элемент
     MPI_Type_create_resized(matrixColumnsType, 0, sizeof(double), &columnType);
     MPI_Type_commit(&columnType);
 
@@ -129,6 +132,7 @@ int main(int argc, char** argv) {
         double temperature[size * size];
         double F[size * size];
 
+        // Инициализируем начальные значения
         for (int i = 0; i < size; ++i) {
             for (int j = 0; j < size; ++j) {
                 temperature[i * size + j] = 300;
@@ -137,12 +141,13 @@ int main(int argc, char** argv) {
         }
 
         // Восстанавливаем первое значение F (F0)
+        // Не по формуле - идем в другую сторону (восстанавливаем по X, а не по Y)
         for (int i = 0; i < size; ++i) {
             restoreValues((temperature + i * size), lambdaByX[i], size, xStep, timeStep, (F + i * size));
         }
 
         for (int t = 0; t < iterations; ++t) {
-            // Вычисляю yn+1/2
+            /// Вычисляю yn+1/2 и Fn+1/2
             MPI_Scatter(F, size, MPI_DOUBLE,
                         fReceive, size, MPI_DOUBLE,
                         0, MPI_COMM_WORLD);
@@ -157,6 +162,8 @@ int main(int argc, char** argv) {
                        F, 1, columnType,
                        0, MPI_COMM_WORLD);
 
+
+            /// Вычисляю yn+1 и Fn+1
             MPI_Scatter(temperature, 1, columnType,
                         temperatureReceive, size, MPI_DOUBLE,
                         0, MPI_COMM_WORLD);
@@ -181,12 +188,6 @@ int main(int argc, char** argv) {
             }
         }
     } else {
-        // Всего есть size столбцов/строк - остальные не нужны
-        if (rank > size) {
-            MPI_Finalize();
-            return 0;
-        }
-
         for (int t = 0; t < iterations; ++t) {
 
             /// Вычисляю yn+1/2 и Fn+1/2
