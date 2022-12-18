@@ -61,9 +61,20 @@ void restoreValues(const double* y,
     }
 }
 
+void logMatrix(double* matrix, const int size) {
+    for (int i = 1; i < size - 1; ++i) {
+        for (int j = 1; j < size - 1; ++j) {
+            std::cout << matrix[i * size + j] << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << std::endl;
+}
+
 int main(int argc, char** argv) {
-    const int size = 10;
-    const int iterations = 100;
+    const int size = 20;
+    const int iterations = 1000;
+    const int logStep = 100;
     const double timeStep = 0.1;
     const double TxLeft = 600;
     const double TxRight = 1200;
@@ -123,21 +134,12 @@ int main(int argc, char** argv) {
         double temperatureByY[size * size];
         double FByY[size * size];
 
+        double temperatureReceive[size];
+        double fReceive[size];
+
         for (int t = 0; t < iterations; ++t) {
             // Вычисляю yn+1/2
-//            for (int x = 0; x < size; ++x) {
-//                solveThomas(FByX[x], lambdaByX[x], size, TxLeft, TxRight, xStep, timeStep, temperatureByX[x]);
-//            }
-//
-//            // Вычисляю Fn+1/2
-//            for (int x = 0; x < size; ++x) {
-//                restoreValues(temperatureByX[x], lambdaByX[x], size, xStep, timeStep, FByX[x]);
-//            }
-//
 
-            double temperatureReceive[size];
-            double fReceive[size];
-//            MPI_Scatter(temperatureByX, size, MPI_DOUBLE, temperatureReceive, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Scatter(FByX, size, MPI_DOUBLE, fReceive, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
             solveThomas(fReceive, myLambdaX, size, TxLeft, TxRight, xStep, timeStep, temperatureReceive);
@@ -152,7 +154,6 @@ int main(int argc, char** argv) {
                     FByY[y * size + x] = FByX[x * size + y];
                 }
             }
-
 
             MPI_Scatter(temperatureByY, size, MPI_DOUBLE, temperatureReceive, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Scatter(FByY, size, MPI_DOUBLE, fReceive, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -170,28 +171,8 @@ int main(int argc, char** argv) {
                 }
             }
 
-
-
-//
-//            // Вычисляю yn+1
-//            for (int y = 0; y < size; ++y) {
-//                double x = xStart + y * xStep;
-//                solveThomas(FByY[y], lambdaByY[y], size, 600 * (1 + x), 600 * (1 + x * x * x), yStep, timeStep, temperatureByY[y]);
-//            }
-//
-//            // Вычисляю Fn+1
-//            for (int y = 0; y < size; ++y) {
-//                restoreValues(temperatureByY[y], lambdaByY[y], size, yStep, timeStep, FByY[y]);
-//            }
-
-            if (t % 20 == 0) {
-                for (int i = 1; i < size - 1; ++i) {
-                    for (int j = 1; j < size - 1; ++j) {
-                        std::cout << temperatureByX[i * size + j] << " ";
-                    }
-                    std::cout << "\n";
-                }
-                std::cout << "\n\n";
+            if (t % logStep == 0) {
+                logMatrix(temperatureByX, size);
             }
         }
     } else {
@@ -206,8 +187,6 @@ int main(int argc, char** argv) {
         for (int t = 0; t < iterations; ++t) {
 
             /// Вычисляю yn+1/2 и Fn+1/2
-            // Получаю значения температуры по X
-//            MPI_Scatter(temperature, size, MPI_DOUBLE, temperature, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             // Получаю значения F по X
             MPI_Scatter(F, size, MPI_DOUBLE, F, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
@@ -220,13 +199,15 @@ int main(int argc, char** argv) {
             MPI_Gather(F, size, MPI_DOUBLE, F, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
             /// Вычисляю yn+1 и Fn+1
+            // Получаю значения температуры и F по Y
             MPI_Scatter(temperature, size, MPI_DOUBLE, temperature, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Scatter(F, size, MPI_DOUBLE, F, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
+            // Само вычисление
             solveThomas(F, myLambdaY, size, TxLeft, TxRight, xStep, timeStep, temperature);
             restoreValues(temperature, myLambdaY, size, xStep, timeStep, F);
 
-
+            // Возвращаю полученные значения
             MPI_Gather(temperature, size, MPI_DOUBLE, temperature, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Gather(F, size, MPI_DOUBLE, F, size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         }
