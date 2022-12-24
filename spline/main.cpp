@@ -10,10 +10,6 @@ double avg(double left, double right) {
     return (left + right) / 2;
 }
 
-/// lambda должна быть на 2 больше, чем F, чтобы корректно проинициализировать F
-/// т.к. там используются средние значения
-/// len(F) = length
-/// len(lambda) = length
 void solveThomas(const double* F,
                     const double* lambda,
                     const int length,
@@ -47,17 +43,18 @@ void solveThomas(const double* F,
     }
 }
 
-void restoreValues(const double* y,
-                   const double* lambda,
-                   const int size,
-                   const double step,
-                   const double timeStep,
-                   double* T) {
+void restoreF(const double* y,
+              const double* lambda,
+              const int size,
+              const double step,
+              const double timeStep,
+              double* F) {
+    const double coefficient = 1 / (2 * step * step);
     for (int i = 1; i < size - 1; ++i) {
         double lambdaPlusHalf = avg(lambda[i], lambda[i + 1]);
         double lambdaMinusHalf = avg(lambda[i], lambda[i - 1]);
-        const auto value = y[i] / timeStep + (lambdaPlusHalf * (y[i + 1] - y[i]) - lambdaMinusHalf * (y[i] - y[i - 1])) / (2 * step * step);
-        T[i] = value;
+        double temp = lambdaPlusHalf * (y[i + 1] - y[i]) - lambdaMinusHalf * (y[i] - y[i - 1]);
+        F[i] = y[i] / timeStep + temp * coefficient;
     }
 }
 
@@ -68,14 +65,14 @@ void logMatrix(double* matrix, const int size) {
         }
         std::cout << "\n";
     }
-    std::cout << std::endl;
+    std::cout << "\n";
 }
 
 int main(int argc, char** argv) {
-    const int size = 10;
-    const int iterations = 1000;
+    const int size = 30;
+    const int iterations = 3000;
     const int logStep = 100;
-    const double timeStep = 0.1;
+    const double timeStep = 0.2;
     const double TxLeft = 600;
     const double TxRight = 1200;
     const double xStart = 0;
@@ -143,7 +140,7 @@ int main(int argc, char** argv) {
         // Восстанавливаем первое значение F (F0)
         // Не по формуле - идем в другую сторону (восстанавливаем по X, а не по Y)
         for (int i = 0; i < size; ++i) {
-            restoreValues((temperature + i * size), lambdaByX[i], size, xStep, timeStep, (F + i * size));
+            restoreF((temperature + i * size), lambdaByX[i], size, xStep, timeStep, (F + i * size));
         }
 
         for (int t = 0; t < iterations; ++t) {
@@ -153,7 +150,7 @@ int main(int argc, char** argv) {
                         0, MPI_COMM_WORLD);
 
             solveThomas(fReceive, myLambdaX, size, TxLeft, TxRight, xStep, timeStep, temperatureReceive);
-            restoreValues(temperatureReceive, myLambdaX, size, xStep, timeStep, fReceive);
+            restoreF(temperatureReceive, myLambdaX, size, xStep, timeStep, fReceive);
 
             MPI_Gather(temperatureReceive, size, MPI_DOUBLE,
                        temperature, 1, columnType,
@@ -172,7 +169,7 @@ int main(int argc, char** argv) {
                         0, MPI_COMM_WORLD);
 
             solveThomas(fReceive, myLambdaX, size, TxLeft, TxRight, xStep, timeStep, temperatureReceive);
-            restoreValues(temperatureReceive, myLambdaX, size, xStep, timeStep, fReceive);
+            restoreF(temperatureReceive, myLambdaX, size, xStep, timeStep, fReceive);
 
             // Аналогично принимаем только 1 элемент
             MPI_Gather(temperatureReceive, size, MPI_DOUBLE,
@@ -198,7 +195,7 @@ int main(int argc, char** argv) {
 
             // Само вычисление
             solveThomas(fReceive, myLambdaX, size, TxLeft, TxRight, xStep, timeStep, temperatureReceive);
-            restoreValues(temperatureReceive, myLambdaX, size, xStep, timeStep, fReceive);
+            restoreF(temperatureReceive, myLambdaX, size, xStep, timeStep, fReceive);
 
             // Возвращаю полученные данные
             MPI_Gather(temperatureReceive, size, MPI_DOUBLE,
@@ -219,7 +216,7 @@ int main(int argc, char** argv) {
 
             // Само вычисление
             solveThomas(fReceive, myLambdaY, size, TxLeft, TxRight, xStep, timeStep, temperatureReceive);
-            restoreValues(temperatureReceive, myLambdaY, size, xStep, timeStep, fReceive);
+            restoreF(temperatureReceive, myLambdaY, size, xStep, timeStep, fReceive);
 
             // Возвращаю полученные значения
             MPI_Gather(temperatureReceive, size, MPI_DOUBLE,
